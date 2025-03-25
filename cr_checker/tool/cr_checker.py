@@ -404,7 +404,6 @@ def fix_copyright(path, copyright_text, encoding, offset):
     temporary_file = create_temp_file(path, encoding)
 
     with open(temporary_file, "r", encoding=encoding) as temp:
-        # Read the first bytes of first line to check if it is equal to the offset
         first_line = temp.readline()
         byte_array = len(first_line.encode(encoding))
 
@@ -413,11 +412,11 @@ def fix_copyright(path, copyright_text, encoding, offset):
             return
 
         with open(path, "w", encoding=encoding) as handle:
+            temp.seek(0)
             if offset > 0:
                 handle.write(first_line + "\n")
+                temp.seek(offset)
             handle.write(copyright_text.format(year=datetime.now().year))
-            # Reset the file pointer to the beginning of the temporary file
-            temp.seek(0)
             for chunk in iter(lambda: temp.read(4096), ""):
                 handle.write(chunk)
     LOGGER.info("Fixed missing header in: %s", path)
