@@ -44,6 +44,8 @@ python cr_checker.py -t <template_file> [options] <inputs>
 
 > NOTE: Option `--remove-offset` can have severe consequences if the offset is miscalculated. Use with **extreme caution**.
 
+> NOTE: Setting directory as `.` will cause that tool removes your complete workspace! This is conected with how Bazel includes python into build. **DO NOT USE THIS OPTION UNLESS YOU'RE 100% SURE IN WHAT YOURE DOING**.
+
 ### Examples
 
 ```sh
@@ -54,6 +56,49 @@ python cr_checker.py -t templates.ini -e py cpp --offset 24 --use_memory_map @fi
 python cr_checker.py -t templates.ini -e py cpp --fix --offset 24 --use_memory_map @files_to_check.txt
 
 ```
+
+#### A bit more about `--offset`
+
+This mode is special that will enable tool to do advance search & replace copyright headers. For example, asuming that we have following python implementation:
+
+```python
+#!/usr/bin/env python3
+
+import os
+```
+
+and we use following command:
+
+```sh
+python cr_checker.py -t templates.ini -e py cpp --fix --use_memory_map @files_to_check.txt
+```
+
+The result will be following:
+
+```python
+##################
+# COPYRIGHT HEADER
+##################
+#!/usr/bin/env python3
+
+import os
+```
+
+This is of course not what we want, and for that we use `--offset=24` where 24 is number of char + 1 (for new line char).
+if we apply this arguments now on same file, the outcome is different.
+
+```python
+#!/usr/bin/env python3
+
+##################
+# COPYRIGHT HEADER
+##################
+
+import os
+```
+
+On another hand, `--offset` has also another role. Asuming that a header text in file is soo big that copyright header is in the middle of the file, with regular command, the tool will not detect copyright headed. With `--offset=<NUM>` we can tell the tool from where to start considering the search for
+copyright header.
 
 ### Template File Format
 
@@ -93,18 +138,20 @@ By default, logs are printed to the console in color-coded format to indicate lo
 To integrate copyright verification into your Bazel-based project, you can use the `copyright_checker` macro. This macro allows you to check source files for compliance with a specified copyright template and configuration. Additionally, it can automatically apply fixes when necessary.
 
 #### Usage
+
 ```python
-load("//cr_checker:def.bzl", "copyright_checker")
+load("@score_cr_checker//cr_checker:def.bzl", "copyright_checker")
 copyright_checker(
     name = "copyright_check",
     srcs = glob(["src/**/*.cpp", "src/**/*.h"]),
-    template = "//tools/cr_checker/resources:templates",
-    config = "//tools/cr_checker/resources:config",
+    config = "@score_cr_checker//tools/cr_checker/resources:config",
+    template = "@score_cr_checker//tools/cr_checker/resources:templates",
     visibility = ["//visibility:public"],
 )
 ```
 
 #### Parameters
+
 - **name**: Unique identifier for the rule.
 - **srcs**: List of source files to check.
 - **visibility**: Defines which targets can access this rule.
@@ -134,5 +181,5 @@ This will allow Bazel to look into project Bazel registry. After that all what i
 # CopyRight checker dependencies
 #
 ###############################################################################
-bazel_dep(name = "cr_checker", version = "0.1.0")
+bazel_dep(name = "score_cr_checker", version = "0.2.1")
 ```
