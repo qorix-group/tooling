@@ -102,3 +102,9 @@ def copyright_checker(
             ],
             visibility = visibility,
         )
+
+    native.alias(
+        name = "copyright-check",
+        actual = ":" + name + ".check",
+        visibility = visibility,
+    )

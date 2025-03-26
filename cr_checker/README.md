@@ -181,5 +181,5 @@ This will allow Bazel to look into project Bazel registry. After that all what i
 # CopyRight checker dependencies
 #
 ###############################################################################
-bazel_dep(name = "score_cr_checker", version = "0.2.1")
+bazel_dep(name = "score_cr_checker", version = "0.2.2")
 ```
