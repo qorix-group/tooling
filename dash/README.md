@@ -1,86 +1,118 @@
 # DASH License Checker Bazel Integration
 
-This directory provides Bazel build configurations and custom rules to integrate the DASH license checker into projects. The setup includes a macro to define a java_binary target for license validation and a custom rule for converting requirement files into the appropriate DASH format.
+This module provides Bazel build configurations and a macro to integrate the [Eclipse DASH license checker](https://github.com/eclipse/dash-licenses) into S-CORE Bazel-based project. It includes:
+
+- A `dash_license_checker` macro to create a `java_binary` for license checking.
+- A formatter rule to convert `requirements_lock.txt` or `Cargo.lock` into the DASH-compatible JSON format.
+- The DASH tool JAR embedded directly in the module, so no additional setup is required, downloaded from [here]("https://repo.eclipse.org/content/repositories/dash-licenses/org/eclipse/dash/org.eclipse.dash.licenses/1.1.0/org.eclipse.dash.licenses-1.1.0.jar")
+
+---
 
 ## Directory Structure
 
 ```bash
-├── BUILD
-├── dash.bzl
-├── tool/formatters
-│   ├── BUILD
-│   ├── dash_format_converter.bzl
-│   └── dash_format_converter.py
+├── BUILD                       # Defines the embedded dash JAR
+├── MODULE.bazel               # Bazel module definition
+├── dash.bzl                   # Contains the dash_license_checker macro
+├── org.eclipse.dash.licenses-1.1.0.jar  # Embedded DASH license checker
+├── tool/
+│   └── formatters/
+│       ├── BUILD
+│       ├── dash_format_converter.bzl
+│       └── dash_format_converter.py
 └── README.md
 ```
 
-### File Descriptions
+---
 
-**BUILD**
+## Key Files
 
-- This file is empty and serves only to mark this directory as a Bazel package.
+### `BUILD`
 
-**dash.bzl**
+- Uses `java_import` to expose the embedded `org.eclipse.dash.licenses-1.1.0.jar` as a Bazel target `//:jar`.
 
-- Contains the dash_license_checker macro, which defines a `java_binary` target to run the DASH license checker.
-- Loads `dash_format_converter.bzl` from the `formatters` package to preprocess requirement files.
-- Converts the input `requirements_lock.txt` file into a format compatible with the DASH license tool before invoking the Java-based checker.
-- Converts also Cargo.lock inputs intp a format compatible with the DASH license tool
+### `MODULE.bazel`
 
-**tool/formatters/BUILD**
+- Declares this directory as a Bazel module: `dash_license_checker`.
 
-- Empty file indicating that formatters is a Bazel package.
+### `dash.bzl`
 
-**tool/formatters/dash_format_converter.bzl**
+- Provides the macro `dash_license_checker` to:
+  - Convert a lockfile into the DASH-compatible format.
+  - Run the DASH license checker using the embedded JAR.
+  - Auto-detect `file_type` from a project config (e.g. Rust or Python).
 
-- Defines a custom Bazel rule `dash_format_converter`.
-- Calls `dash_format_converter.py` to transform `requirements_lock.txt`  or `Cargo.lock` into a format that the DASH tool can process.
+### `tool/formatters/dash_format_converter.bzl`
 
-**tool/formatters/dash_format_converter.py**
+- Custom Bazel rule `dash_format_converter` that wraps the Python script for converting inputs.
 
-- Implements the logic to convert the input into a format accepted by the DASH license checker.
-- This script is executed as part of the `dash_format_converter` Bazel rule.
+### `tool/formatters/dash_format_converter.py`
+
+- Transforms `requirements_lock.txt` or `Cargo.lock` into the required JSON format.
+
+---
 
 ## Usage
 
-To integrate the DASH license checker into your Bazel project, define a target in your `BUILD` file as follows:
+In the consuming Bazel project:
 
-```bash
+### 1. In `MODULE.bazel`
+
+```python
+bazel_dep(name = "dash_license_checker", version = "0.1.0")
+```
+
+### 2. In the `BUILD` file
+
+#### For Python dependencies:
+
+```python
 load("@dash_license_checker//:dash.bzl", "dash_license_checker")
 
+filegroup(
+    name = "requirements_lock",
+    srcs = ["requirements_lock.txt"],
+)
+
 dash_license_checker(
-    name = "my_project_license_check",
-    src = "//path/to/requirements_lock.txt",
+    name = "python_license_check",
+    src = "//:requirements_lock",
     visibility = ["//visibility:public"],
 )
 ```
 
-This will:
+#### For Rust dependencies:
 
-1. Use dash_format_converter to process requirements_lock.txt.
-2. Create a java_binary target that executes the DASH license checker with the converted file.
-3. Ensure compliance with dependency licensing requirements in your project.
-
-
-
-Example to check `RUST` based dependecies:
-
-```bash
-# Needed for Dash tool to check rust dependency licenses.
+```python
 filegroup(
     name = "cargo_lock",
-    srcs = [
-        "_tooling/Cargo.lock",
-    ],
-    visibility = ["//visibility:public"],
+    srcs = ["Cargo.lock"],
 )
 
 dash_license_checker(
-    name = "rust",
-    src = "//docs:cargo_lock",
+    name = "rust_license_check",
+    src = "//:cargo_lock",
     visibility = ["//visibility:public"],
-    file_type = "cargo"
+    file_type = "cargo",
 )
-
 ```
 
+---
+
+## Output
+
+Running the generated target will:
+
+1. Convert the input lockfile to DASH-compatible JSON.
+2. Run the embedded DASH license checker JAR.
+3. Output licensing report or violations to standard output.
+
+---
+
+## Benefits
+
+✅ No need to fetch the JAR separately — it's embedded.  
+✅ Language-agnostic input support (Python, Rust).  
+✅ Fully reproducible and self-contained via Bazel module.
+
+---
