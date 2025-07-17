@@ -34,12 +34,12 @@ def score_py_pytest(name, srcs, args = [], data = [], deps = [], env = {}, plugi
             pytest_bootstrap,
         ] + srcs,
         main = pytest_bootstrap,
-        args = args +
-               ["-c $(location %s)" % pytest_ini] +
+        args = ["-c $(location %s)" % pytest_ini] +
                [
                    "-p no:cacheprovider",
                    "--show-capture=no",
                ] +
+               args +
                plugins +
                ["$(location %s)" % x for x in srcs],
         deps = all_requirements + deps,
