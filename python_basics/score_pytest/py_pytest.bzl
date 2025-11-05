@@ -36,7 +36,6 @@ def score_py_pytest(name, srcs, args = [], data = [], deps = [], env = {}, plugi
         args = [
                    "-c $(location %s)" % pytest_ini,
                    "-p no:cacheprovider",
-                   "--show-capture=no",
 
                    # XML_OUTPUT_FILE: Location to which test actions should write a test
                    # result XML output file. Otherwise, Bazel generates a default XML
