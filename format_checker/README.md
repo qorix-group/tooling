@@ -86,6 +86,26 @@ This will register two Bazel targets:
 - `bazel run //:format.fix` — fixes format issues
 - `bazel test //:format.check` — fails on unformatted files
 
+### 3️⃣ In VS Code settings:
+
+⚠️ First formatting run can be slow!
+
+Add the following entry to `.vscode/settings.json`:
+
+```json
+"rust-analyzer.rustfmt.overrideCommand": [
+    "${workspaceFolder}/.vscode/rustfmt.sh"
+]
+```
+
+Add `.vscode/rustfmt.sh` file with `+x` permissions:
+
+```bash
+#!/usr/bin/env bash
+
+bazel run @score_tooling//format_checker:rustfmt_with_policies
+```
+
 ---
 
 ## Rust support
