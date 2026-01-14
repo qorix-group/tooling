@@ -63,7 +63,7 @@ def add_test_properties(
     #     raise ValueError("'derivation_technique' is required and cannot be empty.")
     #
 
-    def decorator(func: TestFunction) -> TestFunction:
+    def decorator(func: Any) -> TestFunction:
         # Clean properties (skip None)
         properties = {
             "PartiallyVerifies": ", ".join(partially_verifies)
@@ -113,6 +113,16 @@ def add_file_and_line_attr(
     """Adding line & file to the <testcase> attribute in the XML"""
     node = request.node
     raw_file_path, line_number, _ = node.location
+    if request.cls and not line_number:
+        # Fallback to the class definition location if the method location is wonky
+        import inspect
+        try:
+            source_file = inspect.getsourcefile(request.cls)
+            source_lines, class_line = inspect.getsourcelines(request.cls)
+            raw_file_path = source_file or raw_file_path
+            line_number = class_line
+        except:
+            pass
 
     # turning `../../../_main/<file_path>` into => <filepath>
     clean_file_path = raw_file_path.split("_main/")[-1]
