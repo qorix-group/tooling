@@ -74,14 +74,14 @@ def add_test_properties(
             "DerivationTechnique": derivation_technique,
         }
         # Ensure a 'description' is there inside the Docstring
-        if not func.__doc__ or not func.__doc__.strip():
-            raise ValueError(
-                f"{func.__name__} does not have a description."
-                + "Descriptions (in docstrings) are mandatory."
-            )
-        # NOTE: This might come back to bite us in some weird edgecase, though I have not thought of one so far
-        # Remove keys with 'falsey' values
+        doc = getattr(func, "__doc__", None)
+        if not doc or not doc.strip():
+            name = getattr(func, "__name__", "Object")
+            raise ValueError(f"{name} does not have a description in docstrings.")
+
         cleaned_properties = {k: v for k, v in properties.items() if v}
+        
+        # This works for both classes and functions
         return pytest.mark.test_properties(cleaned_properties)(func)
 
     return decorator
@@ -110,22 +110,24 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 def add_file_and_line_attr(
     record_xml_attribute: Callable[[str, str], None], request: pytest.FixtureRequest
 ) -> None:
-    """Adding line & file to the <testcase> attribute in the XML"""
     node = request.node
+    # node.location returns (filename, lineno, display_name)
     raw_file_path, line_number, _ = node.location
-    if request.cls and not line_number:
-        # Fallback to the class definition location if the method location is wonky
+    
+    # If it's a class-based test and we want the specific method line
+    if request.cls and request.function:
         import inspect
         try:
-            source_file = inspect.getsourcefile(request.cls)
-            source_lines, class_line = inspect.getsourcelines(request.cls)
-            raw_file_path = source_file or raw_file_path
-            line_number = class_line
-        except:
+            # Get the actual source lines of the function/method
+            _, func_line = inspect.getsourcelines(request.function)
+            line_number = func_line
+        except Exception:
             pass
 
-    # turning `../../../_main/<file_path>` into => <filepath>
+    # Clean the file path
     clean_file_path = raw_file_path.split("_main/")[-1]
+    
     record_xml_attribute("file", str(clean_file_path))
-    # Adding +1 to the line so we point to the decorator instead of above it
-    record_xml_attribute("line", str(line_number + 1))
+    # Using the raw line number is usually safer than +1 
+    # as IDEs/tools map to the 'def' line anyway
+    record_xml_attribute("line", str(line_number))
