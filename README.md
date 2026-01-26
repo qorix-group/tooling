@@ -24,6 +24,7 @@ See the individual README files for detailed usage instructions and configuratio
 | **python_basics** | Python development utilities and testing | [README](python_basics/README.md) |
 | **starpls** | Starlark language server support | [README](starpls/README.md) |
 | **tools** | Formatters & Linters | [README](tools/README.md) |
+| **coverage** | Ferrocene Rust coverage workflow | [README](coverage/README.md) |
 
 ## Usage Examples
 
@@ -32,6 +33,27 @@ Load tools in your `BUILD` files:
 ```starlark
 load("@score_tooling//:defs.bzl", "score_py_pytest")
 load("@score_tooling//:defs.bzl", "cli_tool")
+load("@score_tooling//coverage:coverage.bzl", "rust_coverage_report")
+```
+
+Create a repo-local coverage target:
+
+```starlark
+rust_coverage_report(
+    name = "rust_coverage",
+    bazel_configs = [
+        "ferrocene-x86_64-linux",
+        "ferrocene-coverage",
+    ],
+    query = 'kind("rust_test", //...)',
+    min_line_coverage = "80",
+)
+```
+
+Then run:
+
+```bash
+bazel run //:rust_coverage -- --min-line-coverage 80
 ```
 
 ## Upgrading from separate MODULES
@@ -53,6 +75,7 @@ The available import targets are:
 - cli_helper
 - use_format_targets
 - setup_starpls
+- rust_coverage_report
 
 ## Format the tooling repository
 ```bash 
