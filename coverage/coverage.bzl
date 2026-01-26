@@ -31,6 +31,7 @@ def _rust_coverage_report_impl(ctx):
         args.extend(["--min-line-coverage", ctx.attr.min_line_coverage])
 
     args_parts = [_shell_quote(a) for a in args]
+
     # The wrapper script forwards preconfigured args and any extra CLI args.
     exec_line = "exec \"${ferrocene_report}\""
     if args_parts:

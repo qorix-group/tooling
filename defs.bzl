@@ -18,6 +18,7 @@ load("//cli_helper:cli_helper.bzl", _cli_helper = "cli_helper")
 
 # --- coverage ---
 load("//coverage:coverage.bzl", _rust_coverage_report = "rust_coverage_report")
+
 # --- cr_checker ---
 load("//cr_checker:cr_checker.bzl", _copyright_checker = "copyright_checker")
 
