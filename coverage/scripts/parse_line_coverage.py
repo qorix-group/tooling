@@ -13,7 +13,7 @@ try:
 except FileNotFoundError:
     sys.exit(1)
 
-m = re.search(r'([0-9]+(?:\.[0-9]+)?)%\s*\((\d+)/(\d+)\s+lines\)', text)
+m = re.search(r"([0-9]+(?:\.[0-9]+)?)%\s*\((\d+)/(\d+)\s+lines\)", text)
 if not m:
     sys.exit(2)
 

@@ -4,7 +4,10 @@ import sys
 from pathlib import Path
 
 if len(sys.argv) < 2:
-    print("usage: normalize_symbol_report.py <symbol_report_json> [roots...]", file=sys.stderr)
+    print(
+        "usage: normalize_symbol_report.py <symbol_report_json> [roots...]",
+        file=sys.stderr,
+    )
     sys.exit(2)
 
 json_path = Path(sys.argv[1])
@@ -15,6 +18,7 @@ for arg in sys.argv[2:]:
 
 with json_path.open("r", encoding="utf-8") as fh:
     data = json.load(fh)
+
 
 def relativize(p: Path):
     if not p.is_absolute():
@@ -34,6 +38,7 @@ def relativize(p: Path):
         except ValueError:
             pass
     return None
+
 
 changed = False
 symbols = []
