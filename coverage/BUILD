@@ -15,12 +15,24 @@ load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files([
+    "ferrocene_report_wrapper.sh.tpl",
+    "scripts/normalize_symbol_report.py",
+    "scripts/parse_line_coverage.py",
+])
+
 sh_binary(
-    name = "rustfmt_with_policies",
-    srcs = ["tool/rustfmt_with_policies.sh"],
+    name = "ferrocene_report",
+    srcs = ["ferrocene_report.sh"],
     data = [
-        "@bazel_tools//tools/bash/runfiles",
-        "@rules_rust//tools/upstream_wrapper:rustfmt",
-        "@score_rust_policies//rustfmt:rustfmt.toml",
+        "scripts/normalize_symbol_report.py",
+        "scripts/parse_line_coverage.py",
     ],
+    visibility = ["//visibility:public"],
+)
+
+sh_binary(
+    name = "llvm_profile_wrapper",
+    srcs = ["llvm_profile_wrapper.sh"],
+    visibility = ["//visibility:public"],
 )

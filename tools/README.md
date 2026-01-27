@@ -1,6 +1,9 @@
-# S-CORE linter
+# S-CORE tooling binaries
 
-This bazel module provides centrally managed binaries for linter and static analysis tools used in S-CORE.
+This bazel module provides centrally managed binaries for developer tools used in S-CORE, including linters
+and formatters.
+
+For Rust coverage reporting, see [coverage/README.md](../coverage/README.md).
 
 It provides a template script `sample.sh` that can be adapted to run the tools you need.
 
