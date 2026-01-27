@@ -11,11 +11,23 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
 package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "ferrocene_report_wrapper.sh.tpl",
+    "scripts/normalize_symbol_report.py",
+    "scripts/parse_line_coverage.py",
+])
 
 sh_binary(
     name = "ferrocene_report",
     srcs = ["ferrocene_report.sh"],
+    data = [
+        "scripts/normalize_symbol_report.py",
+        "scripts/parse_line_coverage.py",
+    ],
     visibility = ["//visibility:public"],
 )
 

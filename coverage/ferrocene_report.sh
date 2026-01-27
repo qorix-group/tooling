@@ -78,6 +78,14 @@ while [[ $# -gt 0 ]]; do
 workspace="${BUILD_WORKSPACE_DIRECTORY:-$(pwd)}"
 cd "${workspace}"
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+parse_line_coverage_py="${script_dir}/scripts/parse_line_coverage.py"
+normalize_symbol_report_py="${script_dir}/scripts/normalize_symbol_report.py"
+if [[ ! -f "${parse_line_coverage_py}" || ! -f "${normalize_symbol_report_py}" ]]; then
+  echo "Coverage helper scripts not found under ${script_dir}/scripts" >&2
+  exit 1
+fi
+
 if [[ -z "${OUT_DIR}" ]]; then
   # Keep reports under bazel-bin by default so they track the build output tree.
   OUT_DIR="$(bazel info bazel-bin)/coverage/rust-tests"
@@ -538,23 +546,7 @@ mkdir -p "${OUT_DIR}"
 parse_line_coverage() {
   local html_path="$1"
   # Blanket reports line coverage in the HTML summary; parse it for gating.
-  python3 - "${html_path}" <<'PY'
-import re
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-try:
-    text = path.read_text(encoding="utf-8", errors="ignore")
-except FileNotFoundError:
-    sys.exit(1)
-
-m = re.search(r'([0-9]+(?:\.[0-9]+)?)%\s*\((\d+)/(\d+)\s+lines\)', text)
-if not m:
-    sys.exit(2)
-
-print(f"{m.group(1)} {m.group(2)} {m.group(3)}")
-PY
+  python3 "${parse_line_coverage_py}" "${html_path}"
 }
 
 failures=()
@@ -780,61 +772,7 @@ for label in "${targets[@]}"; do
 
   # Normalize symbol-report paths to be workspace-relative (like the demo),
   # so blanket can reliably locate sources.
-  python3 - "${symbol_report_json}" "${workspace}" "${exec_root}" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-json_path = Path(sys.argv[1])
-roots = []
-for arg in sys.argv[2:]:
-    if arg:
-        roots.append(Path(arg).resolve())
-
-with json_path.open("r", encoding="utf-8") as fh:
-    data = json.load(fh)
-
-def relativize(p: Path):
-    if not p.is_absolute():
-        return p.as_posix()
-    for root in roots:
-        try:
-            return p.relative_to(root).as_posix()
-        except ValueError:
-            pass
-    try:
-        rp = p.resolve()
-    except Exception:
-        return None
-    for root in roots:
-        try:
-            return rp.relative_to(root).as_posix()
-        except ValueError:
-            pass
-    return None
-
-changed = False
-symbols = []
-for sym in data.get("symbols", []):
-    fname = sym.get("filename")
-    if not fname:
-        continue
-    rel = relativize(Path(fname))
-    if rel is None:
-        changed = True
-        continue
-    if rel != fname:
-        sym["filename"] = rel
-        changed = True
-    symbols.append(sym)
-
-if symbols != data.get("symbols", []):
-    data["symbols"] = symbols
-
-if changed:
-    with json_path.open("w", encoding="utf-8") as fh:
-        json.dump(data, fh)
-PY
+  python3 "${normalize_symbol_report_py}" "${symbol_report_json}" "${workspace}" "${exec_root}"
 
   bin_arg="${bin_path}"
   if [[ "${bin_rel}" != /* ]]; then

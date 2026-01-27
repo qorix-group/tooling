@@ -40,29 +40,18 @@ def _rust_coverage_report_impl(ctx):
 
     # Resolve the report script via runfiles for remote/CI compatibility.
     runfile_path = ctx.executable._ferrocene_report.short_path
-    script_content = """#!/usr/bin/env bash
-set -euo pipefail
+    ctx.actions.expand_template(
+        template = ctx.file._wrapper_template,
+        output = script,
+        substitutions = {
+            "@@RUNFILE@@": _shell_quote(runfile_path),
+            "@@EXEC_LINE@@": exec_line,
+        },
+        is_executable = True,
+    )
 
-report_runfile={runfile}
-if [[ -n "${{RUNFILES_DIR:-}}" ]]; then
-  ferrocene_report="${{RUNFILES_DIR}}/${{report_runfile}}"
-elif [[ -n "${{RUNFILES_MANIFEST_FILE:-}}" ]]; then
-  ferrocene_report="$(grep -m1 "^${{report_runfile}} " "${{RUNFILES_MANIFEST_FILE}}" | cut -d' ' -f2-)"
-else
-  ferrocene_report="${{report_runfile}}"
-fi
-
-if [[ ! -x "${{ferrocene_report}}" ]]; then
-  echo "ferrocene_report not found at ${{ferrocene_report}}" >&2
-  exit 1
-fi
-
-{exec_line}
-""".format(runfile = _shell_quote(runfile_path), exec_line = exec_line)
-
-    ctx.actions.write(script, script_content, is_executable = True)
-
-    runfiles = ctx.runfiles(files = [ctx.executable._ferrocene_report])
+    report_runfiles = ctx.attr._ferrocene_report[DefaultInfo].default_runfiles
+    runfiles = ctx.runfiles(files = [ctx.executable._ferrocene_report]).merge(report_runfiles)
     return [DefaultInfo(executable = script, runfiles = runfiles)]
 
 rust_coverage_report = rule(
@@ -85,6 +74,10 @@ rust_coverage_report = rule(
             default = Label("//coverage:ferrocene_report"),
             executable = True,
             cfg = "exec",
+        ),
+        "_wrapper_template": attr.label(
+            default = Label("//coverage:ferrocene_report_wrapper.sh.tpl"),
+            allow_single_file = True,
         ),
     },
     doc = "Creates a repo-local wrapper for Ferrocene Rust coverage reports.",

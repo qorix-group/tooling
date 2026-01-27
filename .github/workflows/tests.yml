@@ -20,3 +20,6 @@ jobs:
         run: |
           cd cr_checker/tests
           bazel test //...
+      - name: Run coverage module tests
+        run: |
+          bazel test //coverage/tests:all

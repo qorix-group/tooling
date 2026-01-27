@@ -11,16 +11,32 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 package(default_visibility = ["//visibility:public"])
 
-sh_binary(
-    name = "rustfmt_with_policies",
-    srcs = ["tool/rustfmt_with_policies.sh"],
+sh_test(
+    name = "parse_line_coverage_test",
+    srcs = ["parse_line_coverage_test.sh"],
     data = [
-        "@bazel_tools//tools/bash/runfiles",
-        "@rules_rust//tools/upstream_wrapper:rustfmt",
-        "@score_rust_policies//rustfmt:rustfmt.toml",
+        "fixtures/blanket_index.html",
+        "//coverage:scripts/parse_line_coverage.py",
+    ],
+)
+
+sh_test(
+    name = "ferrocene_report_help_test",
+    srcs = ["ferrocene_report_help_test.sh"],
+    data = [
+        "//coverage:ferrocene_report",
+    ],
+)
+
+sh_test(
+    name = "normalize_symbol_report_test",
+    srcs = ["normalize_symbol_report_test.sh"],
+    data = [
+        "fixtures/symbol_report.json",
+        "//coverage:scripts/normalize_symbol_report.py",
     ],
 )
