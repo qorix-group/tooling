@@ -31,7 +31,7 @@ def test_venv_ok():
     try:
         import pytest  # type ignore
 
-        python_venv_folder = Path([x for x in packages if "python_3_12_" in x][0]).resolve()
+        python_venv_folder = [x for x in packages if "python_3_12_" in x][0]
         # Trying to actually use pytest module and collect current test & file
         proc = subprocess.run(
             [
