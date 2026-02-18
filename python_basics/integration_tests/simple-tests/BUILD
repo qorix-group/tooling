@@ -20,6 +20,7 @@ score_virtualenv(
 score_py_pytest(
     name = "venv_ok_test",
     srcs = ["test_venv_ok.py"],
+    deps = ["@rules_python//python/runfiles"],
 )
 
 score_py_pytest(
