@@ -21,6 +21,7 @@ score_py_pytest(
     name = "venv_ok_test",
     srcs = ["test_venv_ok.py"],
     deps = ["@rules_python//python/runfiles"],
+    data = [":basic_venv"],
 )
 
 score_py_pytest(
