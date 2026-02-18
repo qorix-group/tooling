@@ -9,9 +9,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
       - name: Run python_basics integration tests
-        run: |
-          cd python_basics/integration_tests
-          bazel test //...
+        shell: bash
+        run: "cd python_basics/integration_tests \n# Have to create the virtualenv as it's a run command. Otherwise basic_venv is just build and won't be able\n# To execute what we need in the simple-tests.\nbazel run //simple-tests:basic_venv\nbazel test //...\n"
       - name: Run starpls integration tests
         run: |
           cd starpls/integration_tests

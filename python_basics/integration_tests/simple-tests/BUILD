@@ -20,7 +20,6 @@ score_virtualenv(
 score_py_pytest(
     name = "venv_ok_test",
     srcs = ["test_venv_ok.py"],
-    data = [":basic_venv"],
 )
 
 score_py_pytest(
